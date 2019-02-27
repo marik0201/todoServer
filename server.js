@@ -23,11 +23,12 @@ app.get("/api/messages", (req, res) => {
     res.json({
       result: JSON.parse(data)
     });
+
   });
 });
 
 app.post("/api/messages", (req, res) => {
-  console.log("body", req.body);
+  
 
   fs.writeFile("message.json", JSON.stringify(req.body), err => {
     if (err) throw err;
@@ -50,13 +51,31 @@ app.delete("/api/messages/:id", (req, res) => {
     fs.writeFile("message.json", JSON.stringify({ items }), err => {
       if (err) throw err;
       console.log("Saved!");
-     res.json({ items });
-
+      res.json({ items });
     });
   });
+});
 
+app.put("/api/messages/:id", (req, res) => {
+  const id = parseInt(req.params.id) || 0;
 
+  fs.readFile(path.join(__dirname, "message.json"), "utf-8", (err, data) => {
+    if (err) return;
 
+    const items = JSON.parse(data).items;
+
+    for (let k in items) {
+      if (items[k].id === id) {
+        items[k].text = req.body.value;
+      }
+    }
+
+    fs.writeFile("message.json", JSON.stringify({ items }), err => {
+      if (err) throw err;
+      console.log("Saved!");
+      res.json({ items });
+    });
+  });
 });
 
 app.listen(PORT, () => console.log(`listening on http://localhost:${PORT}`));

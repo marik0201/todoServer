@@ -19,9 +19,15 @@
     cursor: pointer;
 
     &:hover {
-        background-color: #e4dcdc;
+        background-color: #ffc8c8;
         transition: .3s all ease;
     }
+}
+
+.message input {
+    position: absolute;
+    right: 120px;
+    top: 10px;
 }
 
 
@@ -37,7 +43,7 @@
     cursor: pointer;
 
     &:hover {
-        background-color: #d7e1ff;
+        background-color: #d7ffde;
         transition: .3s all ease;
     }
 }

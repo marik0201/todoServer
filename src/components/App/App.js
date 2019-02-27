@@ -1,8 +1,7 @@
 import React, { Component } from "react";
 import TodoList from "../TodoList/TodoList";
-import axios from 'axios'
+import axios from "axios";
 import "./App.scss";
-
 
 class App extends Component {
   constructor(props) {
@@ -15,56 +14,49 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.setState({ loading: true })
+    this.setState({ loading: true });
 
-    axios.get("http://localhost:3000/api/messages").then(res => {
-      this.setState({ items: res.data.result.items, loading: false })
-    }).catch(err => {
-      console.log(err);
+    axios
+      .get("http://localhost:3000/api/messages")
+      .then(res => {
+        this.setState({ items: res.data.result.items, loading: false });
+      })
+      .catch(err => {
+        console.log(err);
 
-      this.setState({ loading: false })
-    });
+        this.setState({ loading: false });
+      });
   }
 
   deleteItem(id) {
     // const items = this.state.items.filter(item => item.id !== id);
     // filter(item => item.id !== id);
 
-    axios.delete("http://localhost:3000/api/messages/" + id, { }).then( res => {
-      const items = res.data.items;
-      
-      this.setState({
-        items
+    axios
+      .delete("http://localhost:3000/api/messages/" + id, {})
+      .then(res => {
+        const items = res.data.items;
+
+        this.setState({
+          items
+        });
       })
-    }).catch(err => console.log(err));
-
-
-
-
-
-    // [0, 2, 4].map(item => {
-    //   if (item === 2) {
-    //     item = newItem 
-    //   }
-
-    //   return item
-    // })
-
+      .catch(err => console.log(err));
   }
 
-  editItem(key) {
-    let bufText = "";
+  editItem(key, value) {
+    console.log(value);
 
-    for (let k in this.state.items) {
-      if (this.state.items[k].id === key) {
-        bufText = this.state.items[k].text;
-        console.log(bufText);
-      }
-    }
+    axios
+      .put("http://localhost:3000/api/messages/" + key, { value })
+      .then(res => {
+        const items = res.data.items;
 
-    this.setState({
-      text: bufText
-    });
+        this.setState({
+          items,
+          text: ""
+        });
+      });
   }
 
   handleChange(e) {
@@ -74,7 +66,7 @@ class App extends Component {
   handleSubmit(e) {
     e.preventDefault();
     if (!this.state.text.length) {
-      return
+      return;
     }
     const newItem = {
       text: this.state.text,
@@ -83,16 +75,18 @@ class App extends Component {
 
     const items = this.state.items.concat(newItem);
 
-    axios.post("http://localhost:3000/api/messages", {
-      items
-    }).then(res => {
-      console.log(res);
+    axios
+      .post("http://localhost:3000/api/messages", {
+        items
+      })
+      .then(res => {
+        console.log(res);
 
-      this.setState(({
-        items,
-        text: ""
-      }));
-    })
+        this.setState({
+          items,
+          text: ""
+        });
+      });
   }
 
   render() {
@@ -107,9 +101,15 @@ class App extends Component {
           <br />
           <button>Отправить</button>
         </form>
-        <TodoList items={this.state.items} deleteItem={this.deleteItem} editItem={this.editItem} />
+        <TodoList
+          items={this.state.items}
+          deleteItem={this.deleteItem}
+          editItem={this.editItem}
+        />
       </div>
-    ) : <div>Loading...</div>;
+    ) : (
+      <div>Loading...</div>
+    );
   }
 }
 
