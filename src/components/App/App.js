@@ -28,10 +28,19 @@ class App extends Component {
 
   deleteItem(id) {
     // const items = this.state.items.filter(item => item.id !== id);
-    const items = this.state.items;
     // filter(item => item.id !== id);
 
-    axios.delete("http://localhost:3000/api/messages/" + id, { })
+    axios.delete("http://localhost:3000/api/messages/" + id, { }).then( res => {
+      const items = res.data.items;
+      
+      this.setState({
+        items
+      })
+    }).catch(err => console.log(err));
+
+
+
+
 
     // [0, 2, 4].map(item => {
     //   if (item === 2) {
@@ -41,9 +50,6 @@ class App extends Component {
     //   return item
     // })
 
-    this.setState({
-      items
-    });
   }
 
   editItem(key) {
