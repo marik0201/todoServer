@@ -13,25 +13,25 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.get("/api/messages", (req, res) => {
+app.get("/api/messages", (req, res, next) => {
   fs.readFile(path.join(__dirname, "message.json"), "utf-8", (err, data) => {
-    if (err)
+    if (err) {
+      // res.status(404).json({error: err.toString()})
+      console.log("err");
+
+      next(new Error("Ошибка сервера"));
+    } else
       res.json({
-        result: []
+        result: JSON.parse(data)
       });
-
-    res.json({
-      result: JSON.parse(data)
-    });
-
   });
 });
 
 app.post("/api/messages", (req, res) => {
-  
-
   fs.writeFile("message.json", JSON.stringify(req.body), err => {
-    if (err) throw err;
+    if (err) {
+      throw err;
+    }
     console.log("Saved!");
   });
 
@@ -76,6 +76,19 @@ app.put("/api/messages/:id", (req, res) => {
       res.json({ items });
     });
   });
+});
+
+app.get("/error", function(req, res, next) {
+  let err = new Error(`${req.ip} tried to access /Forbidden`); // Sets error message, includes the requester's ip address!
+  err.statusCode = 403;
+  next(err);
+});
+
+app.use(function(err, req, res, next) {
+  // Any request to this server will get here, and will send an HTTP
+  // response with the error message 'woops'
+  if (!err.statusCode) err.statusCode = 200;
+  res.status(err.statusCode).json({ message: err.message });
 });
 
 app.listen(PORT, () => console.log(`listening on http://localhost:${PORT}`));

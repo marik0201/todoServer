@@ -6,7 +6,7 @@ import "./App.scss";
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = { items: [], text: "", loading: false };
+    this.state = { items: [], text: "", loading: false, errorMessage: "" };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.deleteItem = this.deleteItem.bind(this);
@@ -14,17 +14,30 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.setState({ loading: true });
+    this.setState({ errorMessage: "", loading: true });
 
     axios
       .get("http://localhost:3000/api/messages")
       .then(res => {
-        this.setState({ items: res.data.result.items, loading: false });
+        if (res.data.message) {
+          console.log(res.data.message);
+          console.log(1);
+
+          this.setState({
+            errorMessage: res.data.message,
+            loading: false
+          });
+        } else {
+          this.setState({ items: res.data.result.items, loading: false });
+        }
       })
       .catch(err => {
-        console.log(err);
+        console.log(2);
 
-        this.setState({ loading: false });
+        this.setState({
+          errorMessage: "Нет подключения к серверу",
+          loading: false
+        });
       });
   }
 
@@ -92,6 +105,7 @@ class App extends Component {
   render() {
     return !this.state.loading ? (
       <div className="container">
+        <span className="errorSpan">{this.state.errorMessage}</span>
         <form onSubmit={this.handleSubmit}>
           <input
             id="new-todo"

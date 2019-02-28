@@ -21,7 +21,7 @@ class TodoList extends Component {
           {this.props.items.map(item => (
             <div className="message" key={item.id} >{item.text}
               <div className="del" onClick={() => this.props.deleteItem(item.id) }></div>
-              <div className="edit" onClick={() => this.props.editItem(item.id, this.state.value) }></div>
+              <div className="edit" onClick={() =>{ this.props.editItem(item.id, this.state.value); this.state.value = "" }}></div>
               <input  onChange={this.handleChange}></input>
             </div>
           ))}
