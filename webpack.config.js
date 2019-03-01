@@ -42,7 +42,7 @@ module.exports = {
         {filename: 'style.css'}
       ),
     new HtmlWebpackPlugin({
-      template: "./src/index.html"
+      template: "./src/login.html"
     })
   ]
 };

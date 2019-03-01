@@ -4,20 +4,88 @@ const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
 
+var passport = require("passport");
+var Strategy = require("passport-local").Strategy;
+var db = require("./src/db");
+
 const app = express();
 
-const PORT = 3000;
+const PORT = 3001;
 
 app.use(cors());
 
+app.use(require("morgan")("combined"));
+app.use(require("cookie-parser")());
+app.use(
+  require("express-session")({
+    secret: "keyboard cat",
+    resave: false,
+    saveUninitialized: false
+  })
+);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+app.set('views', path.join(__dirname, 'views'));
+
+passport.use(
+  new Strategy(function(username, password, cb) {
+    db.users.findByUsername(username, function(err, user) {
+      if (err) {
+        return cb(err);
+      }
+      if (!user) {
+        return cb(null, false);
+      }
+      if (user.password != password) {
+        return cb(null, false);
+      }
+      return cb(null, user);
+    });
+  })
+);
+
+passport.serializeUser(function(user, cb) {
+  cb(null, user.id);
+});
+
+passport.deserializeUser(function(id, cb) {
+  db.users.findById(id, function(err, user) {
+    if (err) {
+      return cb(err);
+    }
+    cb(null, user);
+  });
+});
+
+
+app.use(passport.initialize());
+app.use(passport.session());
+
+app.get("/login", function(req, res) {
+  console.log("111");
+  app.render('index');
+});
+
+app.get("/", function(req, res) {
+  res.render("index", { user: req.user });
+});
+
+app.post(
+  "/login",
+  passport.authenticate("local", { failureRedirect: "/login" }),
+  function(req, res) {
+    console.log("1");
+    res.redirect("/");
+  }
+);
 
 app.get("/api/messages", (req, res, next) => {
   fs.readFile(path.join(__dirname, "message.json"), "utf-8", (err, data) => {
     if (err) {
       // res.status(404).json({error: err.toString()})
-      console.log("err");
+      // throw err;
+      console.log(err);
 
       next(new Error("Ошибка сервера"));
     } else

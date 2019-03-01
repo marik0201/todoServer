@@ -33,7 +33,6 @@ class App extends Component {
       })
       .catch(err => {
         console.log(2);
-
         this.setState({
           errorMessage: "Нет подключения к серверу",
           loading: false
