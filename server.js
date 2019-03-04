@@ -26,57 +26,32 @@ app.use(
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.set('views', path.join(__dirname, 'views'));
-
-passport.use(
-  new Strategy(function(username, password, cb) {
-    db.users.findByUsername(username, function(err, user) {
-      if (err) {
-        return cb(err);
-      }
-      if (!user) {
-        return cb(null, false);
-      }
-      if (user.password != password) {
-        return cb(null, false);
-      }
-      return cb(null, user);
-    });
-  })
-);
-
-passport.serializeUser(function(user, cb) {
-  cb(null, user.id);
-});
-
-passport.deserializeUser(function(id, cb) {
-  db.users.findById(id, function(err, user) {
-    if (err) {
-      return cb(err);
-    }
-    cb(null, user);
-  });
-});
-
+app.use(express.static( __dirname + '/src/views'));
 
 app.use(passport.initialize());
 app.use(passport.session());
 
+
+
 app.get("/login", function(req, res) {
-  console.log("111");
+  console.log("ERROR");
   app.render('index');
 });
 
 app.get("/", function(req, res) {
-  res.render("index", { user: req.user });
+  console.log("REDIRECT");
+  
+  res.sendFile("index.html", { user: req.user });
 });
 
 app.post(
-  "/login",
+  "/api/login",
   passport.authenticate("local", { failureRedirect: "/login" }),
   function(req, res) {
-    console.log("1");
-    res.redirect("/");
+    
+    res.json({
+      user: req.user.username
+    });
   }
 );
 
@@ -158,5 +133,42 @@ app.use(function(err, req, res, next) {
   if (!err.statusCode) err.statusCode = 200;
   res.status(err.statusCode).json({ message: err.message });
 });
+
+
+
+
+passport.use(
+  new Strategy(function(username, password, cb) {
+    db.users.findByUsername(username, function(err, user) {
+      if (err) {
+        return cb(err);
+      }
+      if (!user) {
+        return cb(null, false);
+      }
+      if (user.password != password) {
+        return cb(null, false);
+      }
+      return cb(null, user);
+    });
+  })
+);
+
+passport.serializeUser(function(user, cb) {
+  cb(null, user.id);
+});
+
+passport.deserializeUser(function(id, cb) {
+  db.users.findById(id, function(err, user) {
+    if (err) {
+      return cb(err);
+    }
+    cb(null, user);
+  });
+});
+
+
+
+
 
 app.listen(PORT, () => console.log(`listening on http://localhost:${PORT}`));
