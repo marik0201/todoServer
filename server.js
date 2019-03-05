@@ -14,46 +14,46 @@ const PORT = 3001;
 
 app.use(cors());
 
-app.use(require("morgan")("combined"));
-app.use(require("cookie-parser")());
-app.use(
-  require("express-session")({
-    secret: "keyboard cat",
-    resave: false,
-    saveUninitialized: false
-  })
-);
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.use(express.static( __dirname + '/src/views'));
 
 app.use(passport.initialize());
 app.use(passport.session());
 
 
 
-app.get("/login", function(req, res) {
-  console.log("ERROR");
-  app.render('index');
-});
+// app.get("/login", function(req, res) {
+//   console.log("ERROR");
+//   res.json({
+//     error: "Нет такого пользователя"
+//   });
+// });
 
-app.get("/", function(req, res) {
-  console.log("REDIRECT");
-  
-  res.sendFile("index.html", { user: req.user });
-});
 
-app.post(
-  "/api/login",
-  passport.authenticate("local", { failureRedirect: "/login" }),
-  function(req, res) {
-    
-    res.json({
-      user: req.user.username
+
+// app.post(
+//   "/api/login",
+//   passport.authenticate("local", { failureRedirect: "/login" }),
+//   function(req, res) {
+//     res.json({
+//       user: req.user.username
+//     });
+//   }
+// );
+
+app.post('/api/login', function(req, res, next) {
+  passport.authenticate('local', function(err, user, info) {
+    if (err) { return next(err); }
+    if (!user) { return next(new Error("Нет пользователя")); }
+    req.logIn(user, function(err) {
+      if (err) { return next(err); }
+      return res.json({
+        user: req.user.username
+      });
     });
-  }
-);
+  })(req, res, next);
+});
 
 app.get("/api/messages", (req, res, next) => {
   fs.readFile(path.join(__dirname, "message.json"), "utf-8", (err, data) => {
@@ -130,7 +130,7 @@ app.get("/error", function(req, res, next) {
 app.use(function(err, req, res, next) {
   // Any request to this server will get here, and will send an HTTP
   // response with the error message 'woops'
-  if (!err.statusCode) err.statusCode = 200;
+  if (!err.statusCode) err.statusCode = 404;
   res.status(err.statusCode).json({ message: err.message });
 });
 

@@ -6,7 +6,7 @@ import "./App.scss";
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = { items: [], text: "", loading: false, errorMessage: "", loadingForm: false, name:"", password:"", user:"" };
+    this.state = { items: [], text: "", loading: false, errorMessage: "", loadingForm: false, name:"", password:"", user:"", errorLogin:"" };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.deleteItem = this.deleteItem.bind(this);
@@ -14,10 +14,17 @@ class App extends Component {
     this.handlePasswordChange = this.handlePasswordChange.bind(this);
     this.handleLoginChange = this.handleLoginChange.bind(this);
     this.submitform = this.submitform.bind(this);    
+    this.closeApp = this.closeApp.bind(this);
   }
 
   componentDidMount() {
     this.setState({ errorMessage: "", loading: true });
+
+    const userName =  localStorage.getItem('user');
+    userName ? this.setState({ loadingForm: true, user: userName }) : this.setState({ loadingForm:false });
+
+  console.log(userName);
+  
 
     axios
       .get("http://localhost:3001/api/messages")
@@ -99,7 +106,8 @@ class App extends Component {
     }
     const newItem = {
       text: this.state.text,
-      id: Date.now()
+      id: Date.now(), 
+      user: this.state.user
     };
 
     const items = this.state.items.concat(newItem);
@@ -122,7 +130,6 @@ class App extends Component {
   submitform(e) {
     const username = this.state.name;
     const password = this.state.password;
-    console.log(name,password);
     
     axios.post("http://localhost:3001/api/login", {
       username,
@@ -130,12 +137,27 @@ class App extends Component {
     }).then( res => {
       console.log(res);
       this.setState({
-        loadingForm: true
+        loadingForm: true,
+        user: res.data.user
+      });
+      localStorage.setItem('user', res.data.user);
+    }).catch(err => {
+      console.log(err);
+      this.setState({
+        errorLogin:"Неверные данные",
+        name:"",
+        password:""
       })
-    }).catch(err => 
-      console.log(err)
-     )
+    });
      e.preventDefault();
+  }
+
+
+  closeApp() {
+    this.setState({
+      loadingForm:false
+    });
+    localStorage.removeItem('user');
   }
 
   render() {
@@ -144,6 +166,7 @@ class App extends Component {
     !this.state.loadingForm ?
     (<form  onSubmit={this.submitform}>
         <div>
+        <span className="errorLogin">{this.state.errorLogin}</span>
         <label>Username:</label>
         <input type="text" name="username" vlaue={this.state.name} onChange={this.handleLoginChange}/><br/>
         </div>
@@ -157,7 +180,9 @@ class App extends Component {
     </form> )   :    
     (
       <div className="container">
+      <div className="closeApp" onClick={this.closeApp}></div>
         <span className="errorSpan">{this.state.errorMessage}</span>
+        <span className="userSpan">Hi {this.state.user}</span>
         <form onSubmit={this.handleSubmit}>
           <input
             id="new-todo"
@@ -168,6 +193,7 @@ class App extends Component {
           <button>Отправить</button>
         </form>
         <TodoList
+          user={this.state.user}
           items={this.state.items}
           deleteItem={this.deleteItem}
           editItem={this.editItem}

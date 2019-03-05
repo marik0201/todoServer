@@ -9,6 +9,7 @@
     box-shadow: 0 3px 10px rgba(0,0,0,.185);
     background-color: #fff;
     padding: 20px;
+    position: relative;
 }
 
 body {
@@ -54,4 +55,28 @@ input {
 
 .errorSpan {
     color: #f00;
+}
+
+.errorLogin {
+    position: absolute;
+    left: 100px;
+    color: #f00;
+}
+
+.closeApp {
+    border-radius: 50%;
+    height: 30px;
+    width: 30px;
+    background-color: #fff;
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    box-shadow: 0 3px 10px rgba(0,0,0,.185);
+    border: 1px solid #f0f0f0;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #d84162;
+        transition: .3s all ease;
+    }
 }
