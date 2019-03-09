@@ -1,3 +1,16 @@
+var users = [
+  {
+    id: 1,
+    name: 'jack',
+    password: 'secret'
+  },
+  {
+    id: 2,
+    name: 'Mark',
+    password: '1'
+  }
+];
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
@@ -5,10 +18,16 @@ const fs = require("fs");
 const path = require("path");
 
 var passport = require("passport");
-var Strategy = require("passport-local").Strategy;
-var db = require("./src/db");
+var jwt = require('jsonwebtoken');
+var passport = require("passport");
+var passportJWT = require("passport-jwt");
+
+var ExtractJwt = passportJWT.ExtractJwt;
+var JwtStrategy = passportJWT.Strategy;
 
 const app = express();
+app.use(passport.initialize());
+
 
 const PORT = 3001;
 
@@ -16,46 +35,58 @@ app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
-
-app.use(passport.initialize());
 app.use(passport.session());
 
+var jwtOptions = {}
+jwtOptions.jwtFromRequest = ExtractJwt.fromAuthHeaderWithScheme('JWT');
+jwtOptions.secretOrKey = 'secretKey';
 
-
-// app.get("/login", function(req, res) {
-//   console.log("ERROR");
-//   res.json({
-//     error: "Нет такого пользователя"
-//   });
-// });
-
-
-
-// app.post(
-//   "/api/login",
-//   passport.authenticate("local", { failureRedirect: "/login" }),
-//   function(req, res) {
-//     res.json({
-//       user: req.user.username
-//     });
-//   }
-// );
-
-app.post('/api/login', function(req, res, next) {
-  passport.authenticate('local', function(err, user, info) {
-    if (err) { return next(err); }
-    if (!user) { return next(new Error("Нет пользователя")); }
-    req.logIn(user, function(err) {
-      if (err) { return next(err); }
-      return res.json({
-        user: req.user.username
-      });
-    });
-  })(req, res, next);
+var strategy = new JwtStrategy(jwtOptions, function(jwt_payload, next) {
+  console.log('payload received', jwt_payload);
+  // usually this would be a database call:
+  var user = users.filter( user => user.id == jwt_payload.id)[0];
+  if (user) {
+    next(null, user);
+  } else {
+    next(null, false);
+  }
 });
 
-app.get("/api/messages", (req, res, next) => {
+passport.use(strategy);
+
+
+
+app.post('/api/login', function(req, res, next) {
+  if(req.body.name && req.body.password){
+    var name = req.body.name;
+  }
+
+  console.log(name);
+  
+  // usually this would be a database call:
+  console.log(users);
+  
+  var user = users.filter( user => user.name == name)[0];
+  if( ! user ){
+    next(new Error("Нет такого юзера"));
+  }
+  console.log(user);
+  
+  if(user.password === req.body.password) {
+    // from now on we'll identify the user by the id and the id is the only personalized value that goes into our token
+    var payload = {id: user.id};
+    console.log('nice');
+    
+    var token = jwt.sign(payload, jwtOptions.secretOrKey);
+    console.log(name);
+    
+    res.json({message: "ok", token: token, user:name});
+  } else {
+    next(new Error("Неверный пароль"));
+}
+});
+
+app.get("/api/messages",   (req, res, next) => {
   fs.readFile(path.join(__dirname, "message.json"), "utf-8", (err, data) => {
     if (err) {
       // res.status(404).json({error: err.toString()})
@@ -83,7 +114,7 @@ app.post("/api/messages", (req, res) => {
   });
 });
 
-app.delete("/api/messages/:id", (req, res) => {
+app.delete("/api/messages/:id", passport.authenticate('jwt', { session: false }), (req, res) => {
   const id = parseInt(req.params.id) || 0;
 
   fs.readFile(path.join(__dirname, "message.json"), "utf-8", (err, data) => {
@@ -137,35 +168,7 @@ app.use(function(err, req, res, next) {
 
 
 
-passport.use(
-  new Strategy(function(username, password, cb) {
-    db.users.findByUsername(username, function(err, user) {
-      if (err) {
-        return cb(err);
-      }
-      if (!user) {
-        return cb(null, false);
-      }
-      if (user.password != password) {
-        return cb(null, false);
-      }
-      return cb(null, user);
-    });
-  })
-);
 
-passport.serializeUser(function(user, cb) {
-  cb(null, user.id);
-});
-
-passport.deserializeUser(function(id, cb) {
-  db.users.findById(id, function(err, user) {
-    if (err) {
-      return cb(err);
-    }
-    cb(null, user);
-  });
-});
 
 
 
