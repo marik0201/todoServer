@@ -6,7 +6,7 @@ import "./App.scss";
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = { items: [], text: "", loading: false, errorMessage: "", loadingForm: false, name:"", password:"", user:"", errorLogin:"" };
+    this.state = { items: [], text: "", loading: false, errorMessage: "", loadingForm: false, name:"", password:"", user:"", errorLogin:"", token:""};
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.deleteItem = this.deleteItem.bind(this);
@@ -18,12 +18,12 @@ class App extends Component {
   }
 
   componentDidMount() {
-    this.setState({ errorMessage: "", loading: true });
 
-    const userName =  localStorage.getItem('user');
-    userName ? this.setState({ loadingForm: true, user: userName }) : this.setState({ loadingForm:false });
+     const token =  localStorage.getItem('token');
+    this.setState({ errorMessage: "", loading: true, token: token });
 
-  console.log(userName);
+    // userName ? this.setState({ loadingForm: true, user: userName }) : this.setState({ loadingForm:false });
+
   
 
     axios
@@ -67,9 +67,10 @@ class App extends Component {
   deleteItem(id) {
     // const items = this.state.items.filter(item => item.id !== id);
     // filter(item => item.id !== id);
-
+    console.log(id);
+    
     axios
-      .delete("http://localhost:3001/api/messages/" + id, {})
+      .delete("http://localhost:3001/api/messages/" + id, {}, {headers: {"Authorization":`JWT ${this.state.token}`}})
       .then(res => {
         const items = res.data.items;
 
@@ -128,19 +129,20 @@ class App extends Component {
 
 
   submitform(e) {
-    const username = this.state.name;
+    const name = this.state.name;
     const password = this.state.password;
     
     axios.post("http://localhost:3001/api/login", {
-      username,
+      name,
       password
     }).then( res => {
       console.log(res);
       this.setState({
         loadingForm: true,
-        user: res.data.user
+        user: res.data.user, 
+        token: res.data.token
       });
-      localStorage.setItem('user', res.data.user);
+      localStorage.setItem('token', res.data.token);
     }).catch(err => {
       console.log(err);
       this.setState({
@@ -157,7 +159,7 @@ class App extends Component {
     this.setState({
       loadingForm:false
     });
-    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   }
 
   render() {
