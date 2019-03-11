@@ -61,7 +61,6 @@ app.post('/api/login', function(req, res, next) {
     var name = req.body.name;
   }
 
-  console.log(name);
   
   // usually this would be a database call:
   console.log(users);
@@ -101,7 +100,7 @@ app.get("/api/messages",   (req, res, next) => {
   });
 });
 
-app.post("/api/messages", (req, res) => {
+app.post("/api/messages",  (req, res) => {
   fs.writeFile("message.json", JSON.stringify(req.body), err => {
     if (err) {
       throw err;
@@ -116,7 +115,8 @@ app.post("/api/messages", (req, res) => {
 
 app.delete("/api/messages/:id", passport.authenticate('jwt', { session: false }), (req, res) => {
   const id = parseInt(req.params.id) || 0;
-
+  console.log(req);
+  
   fs.readFile(path.join(__dirname, "message.json"), "utf-8", (err, data) => {
     if (err) return;
 
