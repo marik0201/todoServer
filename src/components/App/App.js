@@ -6,25 +6,25 @@ import "./App.scss";
 class App extends Component {
   constructor(props) {
     super(props);
-    this.state = { items: [], text: "", loading: false, errorMessage: "", loadingForm: false, name:"", password:"", user:"", errorLogin:"", token:""};
+    this.state = { items: [], text: "", loading: false, errorMessage: "", loadingForm: false, name: "", password: "", user: "", errorLogin: "", token: "" };
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
     this.deleteItem = this.deleteItem.bind(this);
     this.editItem = this.editItem.bind(this);
     this.handlePasswordChange = this.handlePasswordChange.bind(this);
     this.handleLoginChange = this.handleLoginChange.bind(this);
-    this.submitform = this.submitform.bind(this);    
+    this.submitform = this.submitform.bind(this);
     this.closeApp = this.closeApp.bind(this);
   }
 
   componentDidMount() {
 
-     const token =  localStorage.getItem('token');
+    const token = localStorage.getItem('token');
     this.setState({ errorMessage: "", loading: true, token: token });
+    const userName = localStorage.getItem('user');
+    userName ? this.setState({ loadingForm: true, user: userName }) : this.setState({ loadingForm:false });
 
-    // userName ? this.setState({ loadingForm: true, user: userName }) : this.setState({ loadingForm:false });
 
-  
 
     axios
       .get("http://localhost:3001/api/messages")
@@ -67,10 +67,15 @@ class App extends Component {
   deleteItem(id) {
     // const items = this.state.items.filter(item => item.id !== id);
     // filter(item => item.id !== id);
-    console.log(id);
-    
+    console.log(this.state.token);
+
     axios
-      .delete("http://localhost:3001/api/messages/" + id, {}, {headers: {"Authorization":`JWT ${this.state.token}`}})
+      .delete("http://localhost:3001/api/messages/" + id,  {
+        headers: {
+          "Authorization": "JWT " + this.state.token,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      })
       .then(res => {
         const items = res.data.items;
 
@@ -107,16 +112,16 @@ class App extends Component {
     }
     const newItem = {
       text: this.state.text,
-      id: Date.now(), 
+      id: Date.now(),
       user: this.state.user
     };
 
     const items = this.state.items.concat(newItem);
 
     axios
-      .post("http://localhost:3001/api/messages", {
-        items
-      })
+      .post("http://localhost:3001/api/messages", 
+        {items}
+      )
       .then(res => {
         console.log(res);
 
@@ -131,79 +136,81 @@ class App extends Component {
   submitform(e) {
     const name = this.state.name;
     const password = this.state.password;
-    
+
     axios.post("http://localhost:3001/api/login", {
       name,
       password
-    }).then( res => {
+    }).then(res => {
       console.log(res);
       this.setState({
         loadingForm: true,
-        user: res.data.user, 
+        user: res.data.user,
         token: res.data.token
       });
       localStorage.setItem('token', res.data.token);
+      localStorage.setItem('user', res.data.user);
     }).catch(err => {
       console.log(err);
       this.setState({
-        errorLogin:"Неверные данные",
-        name:"",
-        password:""
+        errorLogin: "Неверные данные",
+        name: "",
+        password: ""
       })
     });
-     e.preventDefault();
+    e.preventDefault();
   }
 
 
   closeApp() {
     this.setState({
-      loadingForm:false
+      loadingForm: false
     });
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
   }
 
   render() {
-    return !this.state.loading ? 
-    
-    !this.state.loadingForm ?
-    (<form  onSubmit={this.submitform}>
-        <div>
-        <span className="errorLogin">{this.state.errorLogin}</span>
-        <label>Username:</label>
-        <input type="text" name="username" vlaue={this.state.name} onChange={this.handleLoginChange}/><br/>
-        </div>
-        <div>
-        <label>Password:</label>
-        <input type="password" name="password" value={this.state.password} onChange={this.handlePasswordChange}/>
-        </div>
-        <div>
-        <input type="submit" value="Submit"/>
-        </div>
-    </form> )   :    
-    (
-      <div className="container">
-      <div className="closeApp" onClick={this.closeApp}></div>
-        <span className="errorSpan">{this.state.errorMessage}</span>
-        <span className="userSpan">Hi {this.state.user}</span>
-        <form onSubmit={this.handleSubmit}>
-          <input
-            id="new-todo"
-            onChange={this.handleChange}
-            value={this.state.text}
-          />
-          <br />
-          <button>Отправить</button>
-        </form>
-        <TodoList
-          user={this.state.user}
-          items={this.state.items}
-          deleteItem={this.deleteItem}
-          editItem={this.editItem}
-        />
-      </div>
-    ) : (
-      <div>Loading...</div>
-    );
+    return !this.state.loading ?
+
+      !this.state.loadingForm ?
+        (<form onSubmit={this.submitform}>
+          <div>
+            <span className="errorLogin">{this.state.errorLogin}</span>
+            <label>Username:</label>
+            <input type="text" name="username" vlaue={this.state.name} onChange={this.handleLoginChange} /><br />
+          </div>
+          <div>
+            <label>Password:</label>
+            <input type="password" name="password" value={this.state.password} onChange={this.handlePasswordChange} />
+          </div>
+          <div>
+            <input type="submit" value="Submit" />
+          </div>
+        </form>) :
+        (
+          <div className="container">
+            <div className="closeApp" onClick={this.closeApp}></div>
+            <span className="errorSpan">{this.state.errorMessage}</span>
+            <span className="userSpan">Hi {this.state.user}</span>
+            <form onSubmit={this.handleSubmit}>
+              <input
+                id="new-todo"
+                onChange={this.handleChange}
+                value={this.state.text}
+              />
+              <br />
+              <button>Отправить</button>
+            </form>
+            <TodoList
+              user={this.state.user}
+              items={this.state.items}
+              deleteItem={this.deleteItem}
+              editItem={this.editItem}
+            />
+          </div>
+        ) : (
+        <div>Loading...</div>
+      );
   }
 }
 
